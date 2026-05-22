@@ -1,391 +1,468 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gmail Analyser — Top 20</title>
+<title>Gmail Cleaner</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #222; min-height: 100vh; padding: 24px 16px; }
   .container { max-width: 860px; margin: 0 auto; }
-  h1 { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #111; }
-  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px; margin-bottom: 14px; }
-  .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-  .metric { background: #f7f7f7; border-radius: 8px; padding: 12px; text-align: center; }
-  .metric-label { font-size: 12px; color: #888; margin-bottom: 4px; }
-  .metric-val { font-size: 22px; font-weight: 600; color: #111; }
-  .controls { display: flex; flex-direction: column; gap: 10px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #111; }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 16px; padding: 18px 22px; margin-bottom: 18px; }
+  .metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .metric { background: #f7f7f7; border-radius: 14px; padding: 14px; text-align: center; }
+  .metric-label { font-size: 12px; color: #777; margin-bottom: 6px; }
+  .metric-val { font-size: 22px; font-weight: 700; color: #111; }
+  .controls { display: flex; flex-direction: column; gap: 12px; }
   .slider-row { display: flex; align-items: center; gap: 12px; }
-  .slider-row label { font-size: 13px; color: #666; min-width: 90px; }
+  .slider-row label { font-size: 14px; color: #555; min-width: 90px; }
   .slider-row input[type=range] { flex: 1; accent-color: #1a73e8; }
-  .slider-row span { font-size: 13px; font-weight: 600; min-width: 60px; text-align: right; color: #111; }
-  .btn-primary { padding: 10px 22px; background: #1a73e8; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .slider-row span { font-size: 13px; font-weight: 700; min-width: 62px; text-align: right; color: #111; }
+  .btn-primary { padding: 12px 24px; background: #1a73e8; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
   .btn-primary:hover { background: #1558b0; }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-run { padding: 8px 18px; background: #1a73e8; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-run { padding: 10px 18px; background: #1a73e8; color: #fff; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; }
   .btn-run:hover { background: #1558b0; }
-  .btn-del { font-size: 12px; padding: 4px 10px; border: 1px solid #f0c0c0; border-radius: 6px; background: transparent; color: #c0392b; cursor: pointer; white-space: nowrap; }
+  .btn-del { font-size: 12px; padding: 6px 11px; border: 1px solid #d7d7d7; border-radius: 10px; background: #fff; color: #c0392b; cursor: pointer; white-space: nowrap; }
   .btn-del:hover { background: #fdecea; }
-  .btn-del:disabled { opacity: 0.4; cursor: not-allowed; }
-  .progress-bar { height: 5px; background: #e5e5e5; border-radius: 3px; overflow: hidden; margin: 8px 0; }
-  .progress-fill { height: 5px; background: #1a73e8; border-radius: 3px; transition: width 0.3s; }
-  .log-area { font-size: 11px; color: #888; margin-top: 4px; min-height: 18px; }
-  .table-header { display: grid; grid-template-columns: 32px 1fr 100px 80px 100px; gap: 8px; padding: 6px 0 8px; border-bottom: 1px solid #e5e5e5; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
-  .row-item { display: grid; grid-template-columns: 32px 1fr 100px 80px 100px; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid #f0f0f0; }
+  .btn-del:disabled { opacity: 0.5; cursor: not-allowed; }
+  .progress-bar { height: 8px; background: #e5e5e5; border-radius: 6px; overflow: hidden; margin: 12px 0; }
+  .progress-fill { height: 8px; background: #1a73e8; border-radius: 6px; transition: width 0.18s ease; }
+  .log-area { font-size: 12px; color: #666; margin-top: 8px; min-height: 18px; }
+  .table-header { display: grid; grid-template-columns: 36px 1.4fr 1fr 110px 120px; gap: 10px; padding: 10px 0 12px; border-bottom: 1px solid #eaeaea; font-size: 12px; color: #676767; text-transform: uppercase; letter-spacing: 0.04em; }
+  .row-item { display: grid; grid-template-columns: 36px 1.4fr 1fr 110px 120px; align-items: center; gap: 10px; padding: 14px 0; border-bottom: 1px solid #f3f3f3; }
   .row-item:last-child { border-bottom: none; }
-  .rank { font-size: 12px; font-weight: 600; color: #aaa; text-align: center; }
-  .sender-name { font-size: 13px; font-weight: 500; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sender-domain { font-size: 11px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bar-wrap { height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; }
-  .bar-fill { height: 6px; border-radius: 3px; }
-  .count-val { font-size: 13px; font-weight: 600; text-align: right; color: #111; }
-  .pill { font-size: 11px; padding: 3px 8px; border-radius: 99px; font-weight: 500; display: inline-block; }
+  .rank { font-size: 13px; font-weight: 700; color: #333; text-align: center; }
+  .sender-name { font-size: 13px; font-weight: 600; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sender-domain { font-size: 11px; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-wrap { height: 10px; background: #f0f0f0; border-radius: 6px; overflow: hidden; margin: 4px 0; }
+  .bar-fill { height: 10px; border-radius: 6px; background: linear-gradient(90deg, #1a73e8 0%, #72b7ff 100%); }
+  .count-val { font-size: 13px; font-weight: 700; text-align: right; color: #111; }
+  .pill { font-size: 11px; padding: 5px 10px; border-radius: 999px; font-weight: 700; display: inline-block; }
   .pill-ok { background: #e6f4ea; color: #1e7e34; }
-  .pill-err { background: #fce8e6; color: #c5221f; }
-  .auth-center { text-align: center; padding: 40px 20px; }
-  .auth-center p { color: #888; font-size: 13px; margin-bottom: 20px; }
-  .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .chart-wrap { position: relative; width: 100%; margin-top: 14px; }
+  .pill-err { background: #fdecea; color: #a80b1d; }
+  .auth-center { text-align: center; padding: 42px 24px; }
+  .auth-center p { color: #666; font-size: 14px; margin-bottom: 18px; line-height: 1.6; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .chart-wrap { position: relative; width: 100%; margin-top: 10px; min-height: 320px; }
   #status-badge { margin-right: 8px; }
   .deleted-row { opacity: 0.35; text-decoration: line-through; }
-  .success-text { color: #1e7e34; font-size: 12px; }
-  .error-text { color: #c5221f; font-size: 12px; }
+  .success-text { color: #1e7e34; font-size: 12px; margin-top: 6px; display: block; }
+  .error-text { color: #c5221f; font-size: 12px; margin-top: 6px; display: block; }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Gmail Analyser — Top 20 expéditeurs</h1>
+  <h1>Gmail Cleaner</h1>
 
   <div id="auth-section" class="card auth-center">
-    <p>Connecte-toi avec ton compte Google pour analyser ta boîte.<br>Accès en lecture + suppression (gmail.modify).</p>
+    <p>Connecte-toi avec Google pour analyser ta boîte et supprimer les emails d'expéditeurs indésirables sur la période choisie.</p>
     <button class="btn-primary" onclick="startAuth()">Se connecter avec Google</button>
-    <p style="margin-top:14px; font-size:11px; color:#bbb;">Aucune donnée envoyée à un serveur tiers — tout tourne localement dans ce fichier.</p>
+    <p style="margin-top:18px; font-size:12px; color:#999;">Client OAuth Google Cloud configuré pour <strong>gmail.modify</strong>. Redirection autorisée vers <code>https://fredhindi-ctrl.github.io/gmail-cleaner/</code>.</p>
   </div>
 
-  <div id="main-section" style="display:none;">
-
+  <div id="main-section" class="hidden">
     <div class="card">
       <div class="flex-between">
-        <div style="font-size:14px;font-weight:600;">Paramètres d'analyse</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#111;">Paramètres d'analyse</div>
+          <div style="font-size:13px;color:#555; margin-top:6px;">Analyse automatique après connexion et pagination Gmail jusqu'à 3000 messages.</div>
+        </div>
         <div>
           <span id="status-badge" class="pill pill-ok">Connecté</span>
-          <button class="btn-run" onclick="runAnalysis()">Lancer l'analyse</button>
+          <button class="btn-run" id="run-btn" onclick="runAnalysis()">Analyser à nouveau</button>
         </div>
       </div>
+
       <div class="controls">
         <div class="slider-row">
-          <label>Période</label>
+          <label for="months-slider">Période</label>
           <input type="range" id="months-slider" min="1" max="24" value="12" step="1" oninput="updateSlider()">
           <span id="months-label">12 mois</span>
         </div>
         <div class="slider-row">
-          <label>Top N</label>
-          <input type="range" id="topn-slider" min="5" max="20" value="20" step="1" oninput="updateTopN()">
-          <span id="topn-label">20</span>
+          <label for="topn-slider">Top N</label>
+          <input type="range" id="topn-slider" min="5" max="20" value="10" step="1" oninput="updateTopN()">
+          <span id="topn-label">10</span>
         </div>
       </div>
     </div>
 
-    <div id="progress-section" style="display:none;" class="card">
-      <div style="font-size:13px;color:#666;" id="progress-text">Analyse en cours...</div>
+    <div id="progress-section" class="card hidden">
+      <div style="font-size:13px;color:#444;" id="progress-text">Préparation de l'analyse...</div>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
       <div class="log-area" id="log-area"></div>
     </div>
 
-    <div id="results-section" style="display:none;">
+    <div id="results-section" class="hidden">
       <div class="metric-grid">
         <div class="metric"><div class="metric-label">Emails analysés</div><div class="metric-val" id="m-total">—</div></div>
         <div class="metric"><div class="metric-label">Expéditeurs uniques</div><div class="metric-val" id="m-senders">—</div></div>
-        <div class="metric"><div class="metric-label">Top N = % total</div><div class="metric-val" id="m-pct">—</div></div>
+        <div class="metric"><div class="metric-label">Top N / total</div><div class="metric-val" id="m-pct">—</div></div>
       </div>
 
-      <div class="card" style="padding:12px 16px;">
+      <div class="card" style="padding:14px 16px;">
         <div class="table-header">
-          <div>#</div><div>Expéditeur</div><div>Volume</div><div>Emails</div><div style="text-align:right;">Action</div>
+          <div>#</div>
+          <div>Expéditeur</div>
+          <div>Domaine</div>
+          <div>Volume</div>
+          <div style="text-align:right;">Action</div>
         </div>
         <div id="rows-container"></div>
       </div>
 
       <div class="card" style="padding:14px 16px;">
-        <div class="chart-wrap" id="chart-wrap">
-          <canvas id="barChart" role="img" aria-label="Top expéditeurs Gmail par volume"></canvas>
+        <div class="chart-wrap">
+          <canvas id="barChart" aria-label="Graphique des top expéditeurs" role="img"></canvas>
         </div>
       </div>
     </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 const CLIENT_ID = '380221017152-tri2v2q2tui3b4e1n15ubtltn380icv9.apps.googleusercontent.com';
-const REDIRECT_URI = "https://fredhindi-ctrl.github.io/gmail-cleaner/";
+const REDIRECT_URI = 'https://fredhindi-ctrl.github.io/gmail-cleaner/';
+const SCOPES = 'https://www.googleapis.com/auth/gmail.modify';
+const MAX_MESSAGES = 3000;
+const MESSAGE_BATCH = 50;
+const DELETION_BATCH = 1000;
+
 let accessToken = null;
 let analysisData = [];
 let chartInstance = null;
 
 function startAuth() {
-  const p = new URLSearchParams({
+  const params = new URLSearchParams({
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: 'token',
-    scope: 'https://www.googleapis.com/auth/gmail.modify',
+    scope: SCOPES,
+    include_granted_scopes: 'true',
     prompt: 'consent'
   });
-  window.location.href = 'https://accounts.google.com/o/oauth2/auth?' + p;
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
 }
 
-function checkToken() {
+function getHashParams() {
   const hash = window.location.hash.substring(1);
-  const p = new URLSearchParams(hash);
-  if (p.get('access_token')) {
-    accessToken = p.get('access_token');
-    history.replaceState(null, null, window.location.pathname);
-    document.getElementById('auth-section').style.display = 'none';
-    document.getElementById('main-section').style.display = 'block';
+  return new URLSearchParams(hash);
+}
+
+function initPage() {
+  const params = getHashParams();
+  if (params.has('access_token')) {
+    accessToken = params.get('access_token');
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+
+  if (accessToken) {
+    document.getElementById('auth-section').classList.add('hidden');
+    document.getElementById('main-section').classList.remove('hidden');
     runAnalysis();
   }
 }
 
 function updateSlider() {
-  const v = document.getElementById('months-slider').value;
-  document.getElementById('months-label').textContent = v + ' mois';
+  const months = document.getElementById('months-slider').value;
+  document.getElementById('months-label').textContent = `${months} mois`;
 }
 
 function updateTopN() {
-  const v = document.getElementById('topn-slider').value;
-  document.getElementById('topn-label').textContent = v;
+  const topn = document.getElementById('topn-slider').value;
+  document.getElementById('topn-label').textContent = topn;
   if (analysisData.length) renderResults(analysisData);
 }
 
-function log(msg) {
-  document.getElementById('log-area').textContent = msg;
+function setProgress(percent, message) {
+  document.getElementById('progress-fill').style.width = `${percent}%`;
+  if (message) document.getElementById('progress-text').textContent = message;
 }
 
-function setProgress(pct, msg) {
-  document.getElementById('progress-fill').style.width = Math.round(pct) + '%';
-  if (msg) document.getElementById('progress-text').textContent = msg;
+function log(message) {
+  document.getElementById('log-area').textContent = message;
 }
 
-async function gmailFetch(url) {
-  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
-  if (!r.ok) throw new Error('Gmail API error ' + r.status);
-  return r.json();
+async function gmailFetch(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`${response.status} ${response.statusText} ${body}`);
+  }
+  return response.json();
+}
+
+function getAfterQuery(months) {
+  const date = new Date();
+  date.setMonth(date.getMonth() - months);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}/${mm}/${dd}`;
 }
 
 async function runAnalysis() {
   if (!accessToken) return;
-  const months = parseInt(document.getElementById('months-slider').value);
-  const d = new Date();
-  d.setMonth(d.getMonth() - months);
-  const after = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  const months = Number(document.getElementById('months-slider').value);
+  const afterDate = getAfterQuery(months);
+  analysisData = [];
 
-  document.getElementById('progress-section').style.display = 'block';
-  document.getElementById('results-section').style.display = 'none';
-  setProgress(0, 'Récupération des messages...');
+  document.getElementById('results-section').classList.add('hidden');
+  document.getElementById('progress-section').classList.remove('hidden');
+  setProgress(0, 'Démarrage de l’analyse…');
+  log('Récupération des messages en cours…');
 
   try {
-    let messages = [], pageToken = null, maxMsg = 3000;
-    while (messages.length < maxMsg) {
-      const remaining = Math.min(500, maxMsg - messages.length);
-      let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${remaining}&q=after:${after}`;
-      if (pageToken) url += '&pageToken=' + pageToken;
-      const data = await gmailFetch(url);
-      if (data.messages) messages.push(...data.messages);
-      if (!data.nextPageToken || messages.length >= maxMsg) break;
-      pageToken = data.nextPageToken;
-      setProgress(5, `${messages.length} messages récupérés...`);
+    const messages = await fetchMessages(afterDate);
+    const totalMessages = messages.length;
+    if (!totalMessages) {
+      setProgress(100, 'Aucun message trouvé pour la période.');
+      log('Aucun message à analyser. Ajuste la période ou vérifie ta boîte.');
+      document.getElementById('m-total').textContent = '0';
+      document.getElementById('m-senders').textContent = '0';
+      document.getElementById('m-pct').textContent = '0 %';
+      document.getElementById('results-section').classList.remove('hidden');
+      return;
     }
 
-    log(messages.length + ' messages — analyse des expéditeurs...');
-    setProgress(10, `Analyse de ${messages.length} messages...`);
-
-    const domainMap = {}, domainNames = {}, BATCH = 50;
-
-    for (let i = 0; i < messages.length; i += BATCH) {
-      const batch = messages.slice(i, i + BATCH);
-      const senders = await Promise.all(batch.map(m => getMessageSender(m.id)));
-      senders.forEach(s => {
-        const domain = parseDomain(s);
-        const name = parseName(s);
-        domainMap[domain] = (domainMap[domain] || 0) + 1;
-        if (!domainNames[domain]) domainNames[domain] = name;
-      });
-      const pct = 10 + Math.round(((i + BATCH) / messages.length) * 85);
-      setProgress(Math.min(pct, 95), `Traité ${Math.min(i + BATCH, messages.length)} / ${messages.length}...`);
-      log(`${Math.min(i + BATCH, messages.length)} / ${messages.length} messages analysés`);
-    }
-
-    const sorted = Object.entries(domainMap)
-      .sort((a, b) => b[1] - a[1]);
-
-    analysisData = sorted.map(([domain, count]) => ({
-      domain, name: domainNames[domain] || domain, count
-    }));
-
-    setProgress(100, 'Terminé !');
-    log(Object.keys(domainMap).length + ' expéditeurs uniques trouvés');
-    setTimeout(() => {
-      document.getElementById('progress-section').style.display = 'none';
-      renderResults(analysisData);
-    }, 600);
-
-  } catch(e) {
-    setProgress(0, 'Erreur : ' + e.message);
+    const senderCounts = await analyzeMessages(messages);
+    displayResults(senderCounts, totalMessages);
+  } catch (error) {
     document.getElementById('status-badge').textContent = 'Erreur';
     document.getElementById('status-badge').className = 'pill pill-err';
+    log(`Erreur : ${error.message}`);
+    setProgress(0, 'Analyse interrompue');
+    console.error(error);
   }
 }
 
-async function getMessageSender(id) {
-  try {
-    const d = await gmailFetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=From`);
-    const h = (d.payload?.headers || []).find(h => h.name === 'From');
-    return h ? h.value : 'unknown';
-  } catch { return 'unknown'; }
+async function fetchMessages(afterDate) {
+  const messages = [];
+  let pageToken = null;
+  while (messages.length < MAX_MESSAGES) {
+    const remaining = Math.min(500, MAX_MESSAGES - messages.length);
+    let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${remaining}&q=${encodeURIComponent(`after:${afterDate}`)}`;
+    if (pageToken) url += `&pageToken=${pageToken}`;
+    const data = await gmailFetch(url);
+    if (data.messages?.length) messages.push(...data.messages);
+    if (!data.nextPageToken || !data.messages?.length) break;
+    pageToken = data.nextPageToken;
+    setProgress(Math.round((messages.length / MAX_MESSAGES) * 20), `${messages.length} messages récupérés…`);
+  }
+  return messages.slice(0, MAX_MESSAGES);
 }
 
-function parseDomain(from) {
-  const m = from.match(/@([\w.\-]+)/);
-  return m ? m[1].toLowerCase() : from.toLowerCase();
+async function analyzeMessages(messages) {
+  const totals = {};
+  const names = {};
+  let completed = 0;
+
+  for (let start = 0; start < messages.length; start += MESSAGE_BATCH) {
+    const batch = messages.slice(start, start + MESSAGE_BATCH);
+    const metadatas = await Promise.all(batch.map(msg => getMessageMetadata(msg.id)));
+
+    metadatas.forEach((senderText) => {
+      const normalized = normalizeSender(senderText);
+      if (!normalized || normalized.domain === 'gmail.com') return;
+      totals[normalized.email] = (totals[normalized.email] || 0) + 1;
+      names[normalized.email] = normalized.name;
+    });
+
+    completed += batch.length;
+    const percent = 20 + Math.round((completed / messages.length) * 65);
+    setProgress(percent, `Analyse ${completed} / ${messages.length}…`);
+    log(`Analyse des messages : ${completed} / ${messages.length}`);
+  }
+
+  const entries = Object.keys(totals).map(email => ({
+    email,
+    name: names[email] || email,
+    domain: parseDomain(email),
+    count: totals[email]
+  })).sort((a, b) => b.count - a.count);
+
+  return entries;
 }
 
-function parseName(from) {
-  const m = from.match(/^"?([^"<]+)"?\s*</);
-  if (m) return m[1].trim().replace(/"/g,'');
-  const dm = from.match(/@([\w.\-]+)/);
-  return dm ? dm[1] : from;
+async function getMessageMetadata(messageId) {
+  const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=metadata&metadataHeaders=From`;
+  const data = await gmailFetch(url);
+  const header = (data.payload?.headers || []).find(h => h.name === 'From');
+  return header?.value || '';
 }
 
-const COLORS = ['#c0392b','#e74c3c','#e67e22','#f39c12','#f1c40f','#2ecc71','#27ae60','#1abc9c','#16a085','#3498db','#2980b9','#9b59b6','#8e44ad','#1a73e8','#0d47a1','#00897b','#558b2f','#6d4c41','#546e7a','#78909c'];
+function normalizeSender(fromValue) {
+  if (!fromValue) return null;
+  const emailMatch = fromValue.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+  if (!emailMatch) return null;
+  const email = emailMatch[1].toLowerCase();
+  const nameMatch = fromValue.match(/^\s*"?([^"<]+)"?\s*</);
+  const name = nameMatch ? nameMatch[1].trim() : email;
+  return { email, name, domain: parseDomain(email) };
+}
 
-function renderResults(data) {
-  const topN = parseInt(document.getElementById('topn-slider').value);
-  const top = data.slice(0, topN);
-  const totalAll = data.reduce((s, d) => s + d.count, 0);
-  const totalTop = top.reduce((s, d) => s + d.count, 0);
-  const pct = totalAll > 0 ? Math.round((totalTop / totalAll) * 100) : 0;
+function parseDomain(email) {
+  const match = email.match(/@(.+)$/);
+  return match ? match[1].toLowerCase() : '';
+}
 
-  document.getElementById('m-total').textContent = totalAll.toLocaleString('fr-FR');
-  document.getElementById('m-senders').textContent = data.length.toLocaleString('fr-FR');
-  document.getElementById('m-pct').textContent = pct + '%';
+function displayResults(entries, totalMessages) {
+  analysisData = entries;
+  document.getElementById('m-total').textContent = totalMessages.toString();
+  document.getElementById('m-senders').textContent = entries.length.toString();
+  const topN = Number(document.getElementById('topn-slider').value);
+  const topSum = entries.slice(0, topN).reduce((sum, item) => sum + item.count, 0);
+  document.getElementById('m-pct').textContent = totalMessages ? `${((topSum / totalMessages) * 100).toFixed(1)} %` : '0 %';
+  renderResults(entries);
+  setProgress(100, 'Analyse terminée');
+  document.getElementById('results-section').classList.remove('hidden');
+  document.getElementById('progress-section').classList.add('hidden');
+  log(`Analyse terminée : ${entries.length} expéditeurs uniques.`);
+}
 
-  const maxCount = top[0]?.count || 1;
+function renderResults(entries) {
+  const topN = Number(document.getElementById('topn-slider').value);
+  const display = entries.slice(0, topN);
   const container = document.getElementById('rows-container');
   container.innerHTML = '';
+  const maxCount = display.length ? display[0].count : 1;
 
-  top.forEach((item, i) => {
-    const barW = Math.round((item.count / maxCount) * 100);
-    const color = COLORS[i % COLORS.length];
-    const nameShort = item.name.length > 32 ? item.name.substring(0,30) + '…' : item.name;
+  display.forEach((item, index) => {
     const row = document.createElement('div');
     row.className = 'row-item';
-    row.id = 'row-' + CSS.escape(item.domain);
+    row.id = `sender-row-${index}`;
     row.innerHTML = `
-      <div class="rank">${i+1}</div>
-      <div style="overflow:hidden;">
-        <div class="sender-name" title="${item.name}">${nameShort}</div>
-        <div class="sender-domain">${item.domain}</div>
+      <div class="rank">${index + 1}</div>
+      <div>
+        <div class="sender-name">${escapeHtml(item.name)}</div>
+        <div class="sender-domain">${escapeHtml(item.email)} · ${escapeHtml(item.domain)}</div>
       </div>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${barW}%;background:${color};"></div></div>
-      <div class="count-val">${item.count.toLocaleString('fr-FR')}</div>
-      <div style="text-align:right;"><button class="btn-del" id="delbtn-${i}" onclick="deleteFromSender('${item.domain}', ${i})">Supprimer</button></div>
+      <div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${Math.max(6, Math.round((item.count / maxCount) * 100))}%;"></div></div>
+        <div style="font-size:11px;color:#666;margin-top:4px;">${item.count} messages</div>
+      </div>
+      <div class="count-val">${item.count}</div>
+      <div style="text-align:right;"><button class="btn-del" onclick="deleteSender(${index})">Supprimer</button></div>
     `;
     container.appendChild(row);
   });
 
-  document.getElementById('results-section').style.display = 'block';
-  renderChart(top);
+  updateChart(display);
 }
 
-function renderChart(data) {
-  const labels = data.map(d => d.domain.length > 22 ? d.domain.substring(0,20)+'…' : d.domain);
-  const counts = data.map(d => d.count);
-  const bgColors = data.map((_, i) => COLORS[i % COLORS.length]);
-  const h = Math.max(280, data.length * 30 + 60);
-  document.getElementById('chart-wrap').style.height = h + 'px';
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+}
 
-  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-  chartInstance = new Chart(document.getElementById('barChart'), {
+function updateChart(entries) {
+  const labels = entries.map(item => `${item.name} (${item.domain})`);
+  const data = entries.map(item => item.count);
+  const backgroundColors = entries.map((_, idx) => `rgba(26, 115, 232, ${Math.max(0.35, 1 - idx * 0.04)})`);
+
+  const ctx = document.getElementById('barChart').getContext('2d');
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
-      datasets: [{
-        label: 'Emails',
-        data: counts,
-        backgroundColor: bgColors,
-        borderRadius: 4,
-        borderSkipped: false
-      }]
+      datasets: [{ label: 'Emails', data, backgroundColor: backgroundColors, borderRadius: 8, barThickness: 18 }]
     },
     options: {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('fr-FR') + ' emails' } }
-      },
       scales: {
-        x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#999', font: { size: 11 } } },
-        y: { grid: { display: false }, ticks: { color: '#555', font: { size: 11 } } }
-      }
+        x: { beginAtZero: true, ticks: { precision: 0 } },
+        y: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
+      },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.x}` } } }
     }
   });
 }
 
-async function deleteFromSender(domain, idx) {
-  const btn = document.getElementById('delbtn-' + idx);
-  btn.disabled = true;
-  btn.textContent = '...';
+async function deleteSender(index) {
+  const item = analysisData[index];
+  if (!item || !item.email) return;
+
+  const row = document.getElementById(`sender-row-${index}`);
+  const button = row.querySelector('button');
+  button.disabled = true;
+  button.textContent = 'Suppression…';
+  row.classList.add('deleted-row');
+
+  const months = Number(document.getElementById('months-slider').value);
+  const afterDate = getAfterQuery(months);
+  const query = `from:${item.email} after:${afterDate}`;
 
   try {
-    const months = parseInt(document.getElementById('months-slider').value);
-    const d = new Date();
-    d.setMonth(d.getMonth() - months);
-    const after = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-    const query = `from:${domain} after:${after}`;
-
-    let deleted = 0, pageToken = null;
-    while (true) {
-      let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=500&q=${encodeURIComponent(query)}`;
-      if (pageToken) url += '&pageToken=' + pageToken;
-      const data = await gmailFetch(url);
-      if (!data.messages || data.messages.length === 0) break;
-
-      const ids = data.messages.map(m => m.id);
-      for (let i = 0; i < ids.length; i += 1000) {
-        const batch = ids.slice(i, i + 1000);
-        await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/batchDelete', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: batch })
-        });
-        deleted += batch.length;
-        btn.textContent = deleted + ' supp.';
-      }
-
-      if (!data.nextPageToken) break;
-      pageToken = data.nextPageToken;
+    const ids = await collectDeleteIds(query);
+    if (!ids.length) {
+      button.textContent = 'Aucun message';
+      row.classList.remove('deleted-row');
+      return;
     }
 
-    btn.textContent = deleted > 0 ? deleted + ' supprimés' : '0 trouvé';
-    btn.style.color = '#1e7e34';
-    btn.style.borderColor = '#a8d5b5';
-
-    const rowEl = document.getElementById('row-' + CSS.escape(domain));
-    if (rowEl) rowEl.classList.add('deleted-row');
-
-    analysisData = analysisData.filter(d => d.domain !== domain);
-    if (analysisData.length) renderChart(analysisData.slice(0, parseInt(document.getElementById('topn-slider').value)));
-
-  } catch(e) {
-    btn.textContent = 'Erreur';
-    btn.style.color = '#c5221f';
-    btn.disabled = false;
+    const deletedCount = await performBatchDelete(ids);
+    button.textContent = `Supprimé ${deletedCount}`;
+    row.querySelector('.count-val').textContent = deletedCount;
+    row.insertAdjacentHTML('beforeend', `<span class="success-text">${deletedCount} emails supprimés</span>`);
+    log(`${deletedCount} emails supprimés pour ${item.email}`);
+  } catch (error) {
+    button.textContent = 'Erreur';
+    button.disabled = false;
+    row.classList.remove('deleted-row');
+    row.insertAdjacentHTML('beforeend', `<span class="error-text">${escapeHtml(error.message)}</span>`);
+    console.error(error);
   }
 }
 
-checkToken();
+async function collectDeleteIds(query) {
+  const ids = [];
+  let pageToken = null;
+  while (true) {
+    let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=500&q=${encodeURIComponent(query)}`;
+    if (pageToken) url += `&pageToken=${pageToken}`;
+    const data = await gmailFetch(url);
+    if (data.messages?.length) ids.push(...data.messages.map(msg => msg.id));
+    if (!data.nextPageToken || !data.messages?.length) break;
+    pageToken = data.nextPageToken;
+    setProgress(100, `Collecte ${ids.length} ids à supprimer…`);
+  }
+  return ids;
+}
+
+async function performBatchDelete(ids) {
+  let deleted = 0;
+  for (let start = 0; start < ids.length; start += DELETION_BATCH) {
+    const batchIds = ids.slice(start, start + DELETION_BATCH);
+    await gmailFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/batchDelete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: batchIds })
+    });
+    deleted += batchIds.length;
+    setProgress(100, `Suppression ${deleted} / ${ids.length}…`);
+  }
+  return deleted;
+}
+
+window.addEventListener('load', () => {
+  updateSlider();
+  updateTopN();
+  initPage();
+});
 </script>
 </body>
 </html>
