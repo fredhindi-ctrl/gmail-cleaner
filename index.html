@@ -130,7 +130,7 @@ const CLIENT_ID = '380221017152-hotoie7k6uofal5v1mgenm79188d5ho7.apps.googleuser
 const REDIRECT_URI = 'https://fredhindi-ctrl.github.io/gmail-cleaner/';
 const SCOPES = 'https://www.googleapis.com/auth/gmail.modify';
 const MAX_MESSAGES = 3000;
-const MESSAGE_BATCH = 50;
+const MESSAGE_BATCH = 10;
 const DELETION_BATCH = 1000;
 
 let accessToken = null;
@@ -284,6 +284,7 @@ async function analyzeMessages(messages) {
     const percent = 20 + Math.round((completed / messages.length) * 65);
     setProgress(percent, `Analyse ${completed} / ${messages.length}…`);
     log(`Analyse des messages : ${completed} / ${messages.length}`);
+    await new Promise(r => setTimeout(r, 150));
   }
 
   const entries = Object.keys(totals).map(email => ({
