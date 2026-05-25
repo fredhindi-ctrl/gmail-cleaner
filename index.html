@@ -143,7 +143,6 @@ function startAuth() {
     redirect_uri: REDIRECT_URI,
     response_type: 'token',
     scope: SCOPES,
-    include_granted_scopes: 'true',
     prompt: 'consent'
   });
   window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
